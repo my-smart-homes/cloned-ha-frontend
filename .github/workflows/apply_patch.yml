@@ -124,7 +124,7 @@ jobs:
         run: |
           gh pr create --title "Apply wording update patch" --body "Automated PR to apply wording update patch." --base dev --head "$BRANCH_NAME"
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.WORKFLOW_TOKEN }}
           BRANCH_NAME: ${{ env.BRANCH_NAME }}
 
 
