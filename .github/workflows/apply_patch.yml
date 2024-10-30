@@ -118,13 +118,22 @@ jobs:
           # Push changes to new branch
           git push origin "$BRANCH_NAME"
 
-      # Step 10: Create pull request
-      - name: Create pull request
+      - name: Create pull request via GitHub API
         if: env.changes_detected == 'true'
         run: |
-          gh pr create --title "Apply wording update patch" --body "Automated PR to apply wording update patch." --base dev --head "$BRANCH_NAME"
+          # Set up data for the PR request
+          PR_TITLE="Apply wording update patch"
+          PR_BODY="Automated PR to apply wording update patch."
+          BASE_BRANCH="dev"
+          HEAD_BRANCH="$BRANCH_NAME"
+          
+          # Make a POST request to create the pull request
+          curl -s -X POST -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/repos/${{ github.repository }}/pulls \
+            -d "{\"title\":\"${PR_TITLE}\", \"body\":\"${PR_BODY}\", \"head\":\"${HEAD_BRANCH}\", \"base\":\"${BASE_BRANCH}\"}"
         env:
-          GITHUB_TOKEN: ${{ secrets.WORKFLOW_TOKEN }}
           BRANCH_NAME: ${{ env.BRANCH_NAME }}
+
 
 
