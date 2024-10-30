@@ -78,23 +78,13 @@ jobs:
         run: |
           rm -rf backup
 
-      # Step 8: Apply the patch
+      # Step 8: Apply patch
       - name: Apply patch
         if: env.changes_detected == 'true'
         run: |
           git apply .github/patches/wording_update.patch
 
-      # Step 9: Commit and force push changes
-      - name: Commit and force push changes
-        if: env.changes_detected == 'true'
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add .
-          git commit -m "Sync and apply wording update patch"
-          git push origin dev --force
-
-      # Step 10: Update last_commit.txt with the new upstream commit hash
+      # Step 8.2: Update last_commit.txt with the new upstream commit hash
       - name: Update last_commit.txt
         if: env.changes_detected == 'true'
         run: |
@@ -103,3 +93,36 @@ jobs:
           git add .github/data/last_commit.txt
           git commit -m "Update last_commit.txt"
           git push origin dev --force
+      
+      # Step 9: Create a new branch, commit, and push changes
+      - name: Commit changes to new branch
+        if: env.changes_detected == 'true'
+        run: |
+          # Configure Git user
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # Create a unique branch name
+          BRANCH_NAME="patch-$(date +%Y%m%d%H%M%S)"
+          echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
+
+          # Create and switch to the new branch
+          git checkout -b "$BRANCH_NAME"
+
+          # Add and commit changes
+          git add .
+          git commit -m "Sync and apply wording update patch"
+
+          # Push changes to new branch
+          git push origin "$BRANCH_NAME"
+
+      # Step 10: Create pull request
+      - name: Create pull request
+        if: env.changes_detected == 'true'
+        run: |
+          gh pr create --title "Apply wording update patch" --body "Automated PR to apply wording update patch." --base dev --head "$BRANCH_NAME"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRANCH_NAME: ${{ env.BRANCH_NAME }}
+
+
